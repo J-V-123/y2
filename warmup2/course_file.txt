@@ -1,0 +1,3 @@
+Data structures and Algorithms,5
+Bachelors thesis,10
+Art history,6
