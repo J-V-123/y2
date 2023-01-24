@@ -5,7 +5,7 @@ def main():
     # This is a short example for creating and using the linked list.
     empty = Empty()
     cell_1 = Cell('abc', empty)
-    cell_2 = Cell(56, cell_1)
+    cell_2 = Cell(12, cell_1)
 
     print(empty)
     print()
