@@ -4,15 +4,16 @@ from player import Player
 from piece import Piece
 from board import Board
 
-
 class ChunkIO(object):
-
     def load_game(self, input):
         """
         @note:This is the game object this method will fill with data. The object
                is returned when the END chunk is reached.
         """
         self.game = Game()
+
+        pieces = {'K': Piece.KING, 'D': Piece.QUEEN, 'T': Piece.ROOK,
+                  'L': Piece.BISHOP, 'R': Piece.KNIGHT}
 
         try:
 
@@ -32,15 +33,23 @@ class ChunkIO(object):
             # The version information and the date are not used in this
             # exercise
 
-            # *************************************************************
-            #
-            # EXERCISE
-            #
-            # ADD CODE HERE FOR READING THE
-            # DATA FOLLOWING THE MAIN HEADERS
-            #
-            #
-            # *************************************************************
+            chunk_header = self.read_fully(5, input)
+            chunk_name = self.extract_chunk_name(chunk_header)
+            chunk_size = self.extract_chunk_size(chunk_header)
+            player_count = 0
+
+            while chunk_name != 'END':
+                if chunk_name == 'CMT':
+                    cmt = ''.join(self.read_fully(chunk_size, input))
+                if chunk_name == 'PLR' and player_count < 2:
+                    player_info = self.read_fully(chunk_size, input)
+                    player_name = ''.join(player_info[2:3+player_info[1]])
+                    player_color = Player.BLACK if player_info[0] == 'M' else Player.WHITE
+                    player = Player(player_name, player_color)
+                    self.game.add_player(player)
+                    player_pieces = player_info[1+player_info[1]:]
+                    for symbol in player_pieces:
+                        if symbol.isupper():
 
             # If we reach this point the Game-object should now have the proper players and
             # a fully set up chess board. Therefore we might as well return it.
