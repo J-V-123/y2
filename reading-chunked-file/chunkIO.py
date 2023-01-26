@@ -33,6 +33,9 @@ class ChunkIO(object):
             # The version information and the date are not used in this
             # exercise
 
+            self.board = Board()
+            self.game.set_board(self.board)
+
             chunk_header = self.read_fully(5, input)
             chunk_name = self.extract_chunk_name(chunk_header)
             chunk_size = self.extract_chunk_size(chunk_header)
@@ -49,8 +52,13 @@ class ChunkIO(object):
                     self.game.add_player(player)
                     player_pieces = player_info[1+player_info[1]:]
                     for symbol in player_pieces:
-                        if symbol.isupper():
-
+                        if symbol.isupper() and symbol in pieces:
+                            piece = Piece(player, pieces[symbol])
+                            piece_info = self.read_fully(2, input)
+                            column = Board.column_char_to_integer(piece_info[0])
+                            row = Board.column_char_to_integer(piece_info[1])
+                            if self.board.is_free(column, row):
+                                self.board.set_piece(piece, column, row)
             # If we reach this point the Game-object should now have the proper players and
             # a fully set up chess board. Therefore we might as well return it.
 
