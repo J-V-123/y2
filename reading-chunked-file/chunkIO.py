@@ -46,7 +46,7 @@ class ChunkIO(object):
                     cmt = ''.join(self.read_fully(chunk_size, input))
                 if chunk_name == 'PLR' and player_count < 2:
                     player_info = self.read_fully(chunk_size, input)
-                    player_name = ''.join(player_info[2:3+player_info[1]])
+                    player_name = ''.join(player_info[2:3+int(player_info[1])])
                     player_color = Player.BLACK if player_info[0] == 'M' else Player.WHITE
                     player = Player(player_name, player_color)
                     self.game.add_player(player)
@@ -59,6 +59,11 @@ class ChunkIO(object):
                             row = Board.column_char_to_integer(piece_info[1])
                             if self.board.is_free(column, row):
                                 self.board.set_piece(piece, column, row)
+
+                chunk_header = self.read_fully(5, input)
+                chunk_name = self.extract_chunk_name(chunk_header)
+                chunk_size = self.extract_chunk_size(chunk_header)
+
             # If we reach this point the Game-object should now have the proper players and
             # a fully set up chess board. Therefore we might as well return it.
 
@@ -77,7 +82,7 @@ class ChunkIO(object):
     def extract_chunk_size(self, chunk_header):
         """
         Given a chunk header (an array of 5 chars) will return the size of this
-        chunks data.
+        chunk's data.
 
         @param chunk_header:
                    a chunk header to process (str)
