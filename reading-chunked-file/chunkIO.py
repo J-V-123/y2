@@ -4,6 +4,7 @@ from player import Player
 from piece import Piece
 from board import Board
 
+
 class ChunkIO(object):
     def load_game(self, input):
         """
@@ -11,9 +12,6 @@ class ChunkIO(object):
                is returned when the END chunk is reached.
         """
         self.game = Game()
-
-        pieces = {'K': Piece.KING, 'D': Piece.QUEEN, 'T': Piece.ROOK,
-                  'L': Piece.BISHOP, 'R': Piece.KNIGHT}
 
         try:
 
@@ -40,25 +38,18 @@ class ChunkIO(object):
             chunk_name = self.extract_chunk_name(chunk_header)
             chunk_size = self.extract_chunk_size(chunk_header)
             player_count = 0
+            valid_names = ['PLR', 'CMT', 'END']
 
             while chunk_name != 'END':
                 if chunk_name == 'CMT':
                     cmt = ''.join(self.read_fully(chunk_size, input))
-                if chunk_name == 'PLR' and player_count < 2:
-                    player_info = self.read_fully(chunk_size, input)
-                    player_name = ''.join(player_info[2:3+int(player_info[1])])
-                    player_color = Player.BLACK if player_info[0] == 'M' else Player.WHITE
-                    player = Player(player_name, player_color)
-                    self.game.add_player(player)
-                    player_pieces = player_info[1+player_info[1]:]
-                    for symbol in player_pieces:
-                        if symbol.isupper() and symbol in pieces:
-                            piece = Piece(player, pieces[symbol])
-                            piece_info = self.read_fully(2, input)
-                            column = Board.column_char_to_integer(piece_info[0])
-                            row = Board.column_char_to_integer(piece_info[1])
-                            if self.board.is_free(column, row):
-                                self.board.set_piece(piece, column, row)
+                if chunk_name == 'PLR':
+                    player = self.create_player(chunk_size, input)
+                    player_count += 1
+                if player_count > 2:
+                    raise CorruptedChessFileError("Too many players!")
+                if chunk_name not in valid_names:
+                    self.read_fully(chunk_size, input)
 
                 chunk_header = self.read_fully(5, input)
                 chunk_name = self.extract_chunk_name(chunk_header)
@@ -66,7 +57,8 @@ class ChunkIO(object):
 
             # If we reach this point the Game-object should now have the proper players and
             # a fully set up chess board. Therefore we might as well return it.
-
+            if not player_count == 2:
+                raise CorruptedChessFileError("Wrong number of players!")
             return self.game
 
         except OSError:
@@ -78,6 +70,44 @@ class ChunkIO(object):
             raise CorruptedChessFileError("Reading the chess data failed 1.")
 
     # HELPER METHODS -------------------------------------------------------
+
+    def create_player(self, chunk_size, input):
+
+        player_info = self.read_fully(chunk_size, input)
+        player_name = ''.join(player_info[2:2 + int(player_info[1])])
+        player_color = Player.BLACK if player_info[0] == 'M' else Player.WHITE
+        player = Player(player_name, player_color)
+        self.game.add_player(player)
+        player_pieces = player_info[2 + int(player_info[1]):]
+        while player_pieces:
+            symbol = player_pieces.pop(0)
+            if symbol.isupper():
+                if symbol == 'K':
+                    piece_type = Piece.KING
+                elif symbol == 'D':
+                    piece_type = Piece.QUEEN
+                elif symbol == 'T':
+                    piece_type = Piece.ROOK
+                elif symbol == 'L':
+                    piece_type = Piece.BISHOP
+                elif symbol == 'R':
+                    piece_type = Piece.KNIGHT
+                else:
+                    raise CorruptedChessFileError("invalid piece type")
+                col = Board.column_char_to_integer(player_pieces.pop(0))
+            elif symbol.isalpha():
+                piece_type = Piece.PAWN
+                col = Board.column_char_to_integer(symbol)
+            row = Board.row_char_to_integer(player_pieces.pop(0))
+            piece = Piece(player, piece_type)
+            try:
+                self.board.set_piece(piece, col, row)
+            except ValueError:
+                raise CorruptedChessFileError("Square already occupied!")
+            except IndexError:
+                raise CorruptedChessFileError("invalid square")
+
+        return player
 
     def extract_chunk_size(self, chunk_header):
         """

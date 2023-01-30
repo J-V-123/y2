@@ -24,7 +24,7 @@ class Test(unittest.TestCase):
         """
         test_data = u"SHAKKI1205072001" \
                     + u"CMT54Laurin revanssipeli, hyvin huonosti on taas menossa..." \
-                    + u"PLR17M5MarkoKa4Ta6b3c3" + u"PLR13V5LAURIKd3Rf1" + u"END00"
+                    + u"PLR17M5MarkoKa4Ta6b3c3" + u"PLR19V5LAURIKd3Dc4La5Rf1" + u"FOO101234567890" + u"END00"
 
         self.input_file = StringIO(test_data)
 
@@ -75,6 +75,97 @@ class Test(unittest.TestCase):
             """All ok"""
 
         self.input_file.close_really()
+
+    def testIllegalPiece(self):
+
+        test_data = u"SHAKKI1205072001" \
+                    + u"CMT54Laurin revanssipeli, hyvin huonosti on taas menossa..." \
+                    + u"PLR17M5MarkoKa4Ha6b3c3" + "PLR13V5LAURIKd3Rf1" + "END00"
+        self.input_file = StringIO(test_data)
+        try:
+            ChunkIO().load_game(self.input_file)
+        except CorruptedChessFileError as e:
+            check = e
+        self.input_file.close()
+        self.assertRaises(CorruptedChessFileError)
+
+    def testTooManyPlayers(self):
+
+        test_data = u"SHAKKI1205072001" \
+                    + u"CMT54Laurin revanssipeli, hyvin huonosti on taas menossa..." \
+                    + u"PLR17M5MarkoKa4Ta6b3c3" + "PLR13V5LAURIKd3Rf1" + "PLR15V5SeppoKd4Rf2f6" + "END00"
+        self.input_file = StringIO(test_data)
+        try:
+            ChunkIO().load_game(self.input_file)
+        except CorruptedChessFileError as e:
+            check = e
+        self.input_file.close()
+        self.assertRaises(CorruptedChessFileError)
+
+    def testTooLittlePlayers(self):
+
+        test_data = u"SHAKKI1205072001" \
+                    + u"CMT54Laurin revanssipeli, hyvin huonosti on taas menossa..." \
+                    + u"PLR17M5MarkoKa4Ta6b3c3" + "END00"
+        self.input_file = StringIO(test_data)
+        try:
+            ChunkIO().load_game(self.input_file)
+        except CorruptedChessFileError as e:
+            check = e
+        self.input_file.close()
+        self.assertRaises(CorruptedChessFileError)
+
+    def testWrongHeader(self):
+
+        test_data = u"SHAKKO1205072001" \
+                    + u"CMT54Laurin revanssipeli, hyvin huonosti on taas menossa..." \
+                    + u"PLR17M5MarkoKa4Ta6b3c3" + "PLR13V5LAURIKd3Rf1" + "END00"
+        self.input_file = StringIO(test_data)
+        try:
+            ChunkIO().load_game(self.input_file)
+        except CorruptedChessFileError as e:
+            check = e
+        self.input_file.close()
+        self.assertRaises(CorruptedChessFileError)
+
+    def testSameSquare(self):
+
+        test_data = u"SHAKKI1205072001" \
+                    + u"CMT54Laurin revanssipeli, hyvin huonosti on taas menossa..." \
+                    + u"PLR17M5MarkoKa4Ta4b3c3" + "PLR13V5LAURIKa4Rf1" + "END00"
+        self.input_file = StringIO(test_data)
+        try:
+            ChunkIO().load_game(self.input_file)
+        except CorruptedChessFileError as e:
+            check = e
+        self.input_file.close()
+        self.assertRaises(CorruptedChessFileError)
+
+    def testInvalidSquare(self):
+
+        test_data = u"SHAKKI1205072001" \
+                    + u"CMT54Laurin revanssipeli, hyvin huonosti on taas menossa..." \
+                    + u"PLR17M5MarkoKa4Ty4b3c3" + "PLR13V5LAURIKa4Rf1" + "END00"
+        self.input_file = StringIO(test_data)
+        try:
+            ChunkIO().load_game(self.input_file)
+        except CorruptedChessFileError as e:
+            check = e
+        self.input_file.close()
+        self.assertRaises(CorruptedChessFileError)
+
+    def testUnexpectedEnd(self):
+
+        test_data = u"SHAKKI1205072001" \
+                    + u"CMT54Laurin revanssipeli, hyvin huonosti on taas menossa..." \
+                    + u"PLR17M5MarkoKb4Td4b3c3" + "PLR13V5LAURIKa4Rf"
+        self.input_file = StringIO(test_data)
+        try:
+            ChunkIO().load_game(self.input_file)
+        except CorruptedChessFileError as e:
+            check = e
+        self.input_file.close()
+        self.assertRaises(CorruptedChessFileError)
 
     def close_silently(self, r):
         try:

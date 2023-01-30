@@ -22,7 +22,6 @@ class BrokenReader(StringIO):
         self.test_data = test_data
         self.raise_counter = raise_exception_at
 
-
     def close(self):
         """
         If the raise_counter is set high enough, all data can be read.
@@ -30,13 +29,11 @@ class BrokenReader(StringIO):
         """
         raise OSError("Simulated I/O problem")
 
-
     def close_really(self):
         """
         Finally closes the file.
         """
         super(BrokenReader, self).close()
-
 
     def read(self, length):
         """
